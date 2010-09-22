@@ -4,8 +4,8 @@ CS437 WebSQL
 
 Authors
 -------------
- > Derek Ditch
- > Derek Snyder
+ * Derek Ditch
+ * Derek Snyder
 
 Just some quick source thrown together for my Web Data Management and XML class at Missouri S & T. This uses the snippet provided by the Google AJAX search API_.
 
