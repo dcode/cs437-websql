@@ -26,19 +26,30 @@ public class WebSQL {
 		m_key = p_key;
 	}
 	
-	public JSONObject Query( String p_query )
+	public JSONObject Query( String p_query ) throws JSONException
 	{
 		JSONObject ret = null;
 		JSONObject resultSetA, resultSetB;
+		JSONArray resultsA = null, resultsB = null;
 		String keywordA = "Derek Ditch MST", keywordB = "Derek Snyder MST";
 		
 		resultSetA = _query(keywordA , "", "");
-		System.out.println("Query: " + keywordA);
-		System.out.println("Results: (Need to figure out how to count this in Java)");
-		
 		resultSetB = _query(keywordB, "", "");
+		
+		try {
+			resultsA = resultSetA.getJSONObject("responseData").getJSONArray("results");
+			resultsB = resultSetB.getJSONObject("responseData").getJSONArray("results");
+			
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		System.out.println("Query: " + keywordA);
+		System.out.println("Results: " + resultsA.length());
+		
 		System.out.println("Query: " + keywordB);
-		System.out.println("Results: (Need to figure out how to count this in Java)");
+		System.out.println("Results: " + resultsB.length());
 		
 		System.out.println("Search complete.");
 		return ret;
