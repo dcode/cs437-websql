@@ -9,8 +9,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 public class WebSQL {
 	private String m_key;
@@ -27,7 +26,25 @@ public class WebSQL {
 		m_key = p_key;
 	}
 	
-	public JSONObject Query( String p_query, String p_referrer, String p_ipaddr )
+	public JSONObject Query( String p_query )
+	{
+		JSONObject ret = null;
+		JSONObject resultSetA, resultSetB;
+		String keywordA = "Derek Ditch MST", keywordB = "Derek Snyder MST";
+		
+		resultSetA = _query(keywordA , "", "");
+		System.out.println("Query: " + keywordA);
+		System.out.println("Results: (Need to figure out how to count this in Java)");
+		
+		resultSetB = _query(keywordB, "", "");
+		System.out.println("Query: " + keywordB);
+		System.out.println("Results: (Need to figure out how to count this in Java)");
+		
+		System.out.println("Search complete.");
+		return ret;
+	}
+	
+	private JSONObject _query( String p_query, String p_referrer, String p_ipaddr )
 	{
 		String query, referrer, ipaddr;
 		JSONObject ret = null;
@@ -59,7 +76,7 @@ public class WebSQL {
 		try {
 			query = URLEncoder.encode( p_query, "utf-8" );
 		
-			uri = new URL(m_key + "v=" + apiVer + "&q=" + query + "&key=" + m_key + "&userip" + ipaddr );
+			uri = new URL(queryURL + "v=" + apiVer + "&q=" + query + "&key=" + m_key + "&userip" + ipaddr );
 
 			conn = uri.openConnection();
 			conn.addRequestProperty("Referer", referrer);
