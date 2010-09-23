@@ -37,6 +37,16 @@ public class Document {
 		LoadOrCreate();
 	}
 	
+	public void Save() throws SQLException
+	{
+		SaveOrUpdate();
+	}
+	
+	protected int GetID()
+	{
+		return m_documentid;
+	}
+	
 	public String GetURL() throws SQLException
 	{
 		String ret_ = m_url;
@@ -44,7 +54,8 @@ public class Document {
 		if( null == ret_ )
 		{
 			/* Pull from DB */
-			PreparedStatement stmt_ = m_conn.prepareStatement("SELECT * FROM documents WHERE documentid = ?");
+			PreparedStatement stmt_ = 
+				m_conn.prepareStatement("SELECT * FROM documents WHERE documentid = ?");
 			stmt_.setInt(1, m_documentid);
 		    ResultSet rs_ = stmt_.executeQuery();
 		    		    
@@ -86,11 +97,12 @@ public class Document {
 	
 	public void SetTitle( String p_title ) throws SQLException
 	{
+		m_title = p_title;
 		PreparedStatement stmt_ = 
 			m_conn.prepareStatement("UPDATE documents SET title = ? WHERE documentid = ?");
 		
 		/* The batch processing is overkill, but it makes it a bit clearer */
-		stmt_.setString(1, p_title);
+		stmt_.setString(1, m_title);
 		stmt_.setInt(2, m_documentid);
 		stmt_.addBatch();
 		
