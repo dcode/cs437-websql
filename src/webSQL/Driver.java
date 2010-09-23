@@ -17,8 +17,24 @@ public class Driver {
 		// This creates the websql.db file and populates it with the schema.
 		setupDB();
 		
-		//wql.Query1();
+		System.out.println("Query 1 - Loading...please wait");
+		System.out.println("-----------------------------------------------------");
+		wql.Query1();
+		
+		System.out.print("\n\n\n\n");
+		System.out.println("Query 2 - Loading...please wait");
+		System.out.println("-----------------------------------------------------");
 		wql.Query2();
+		
+		System.out.print("\n\n\n\n");
+		System.out.println("Query 3 - Loading...please wait");
+		System.out.println("-----------------------------------------------------");
+		wql.Query3();
+		
+		System.out.print("\n\n\n\n");
+		System.out.println("Query 4 - Loading...please wait");
+		System.out.println("-----------------------------------------------------");
+		wql.Query4();
 		
 	}
 	

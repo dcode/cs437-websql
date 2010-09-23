@@ -2,13 +2,16 @@ package webSQL;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.sql.*;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 //This class will provide a object-to-relational map to the accompanying database table.
 public class Document {
@@ -157,7 +160,7 @@ public class Document {
 		ResultSet rs_ = stmt_.executeQuery();
 		
 		// Limit to first 8 neighbors
-		while( rs_.next() && count_ < 8)
+		while( rs_.next() && count_ < 25)
 		{
 			doc_ = new Document();
 			url_ = rs_.getString("href");
@@ -186,14 +189,24 @@ public class Document {
 		URL u = new URL(m_url);
 		URLConnection conn = u.openConnection();
 		String encoding = conn.getContentEncoding();
+		InputStream is_ = null;
 		
 		if(null == encoding )
 		{
 			encoding = "ISO-8859-1";
 		}
 		
-		BufferedReader br = new BufferedReader( new 
-				InputStreamReader(conn.getInputStream(), encoding));
+		if(encoding.contains("gzip") )
+		{
+			is_ = new GZIPInputStream(conn.getInputStream());
+			encoding = "ISO-8859-1";
+		}
+		else
+		{
+			is_ = conn.getInputStream();
+		}
+		Reader decoder = new InputStreamReader(is_, encoding);
+		BufferedReader br = new BufferedReader( decoder );
 		StringBuilder sb = new StringBuilder(16384);
 		try {
 	        String line;
@@ -302,10 +315,7 @@ public class Document {
 			pstmt_.setString(3, m_source);
 			pstmt_.setInt(4, m_documentid);
 			
-			pstmt_.addBatch();
-			m_conn.setAutoCommit(false);
-			pstmt_.executeBatch();
-			m_conn.setAutoCommit(true);
+			pstmt_.execute();
 
 		}
 		else
@@ -317,14 +327,30 @@ public class Document {
 			pstmt_.setString(2, m_title);
 			pstmt_.setString(3, m_source);
 			
-			pstmt_.addBatch();
-			m_conn.setAutoCommit(false);
-			pstmt_.executeBatch();
-			m_conn.setAutoCommit(true);
+			pstmt_.execute();
 			
 			m_documentid = stmt_.getGeneratedKeys().getInt(1);
 		}
 
+	}
+
+	public Vector<Anchor> GetAnchors() throws ClassNotFoundException, SQLException 
+	{
+		Vector<Anchor> ret_ = new Vector<Anchor>();
+		PreparedStatement pstmt_ = m_conn.prepareStatement("SELECT * FROM anchors WHERE doc_id = ?;");
+		pstmt_.setInt(1, m_documentid);
+		ResultSet rs_ = pstmt_.executeQuery();
+		
+		Anchor a_ = null;
+		
+		while( rs_.next())
+		{
+			a_ = new Anchor(rs_.getShort("anchorid"));
+			a_.Save();
+			ret_.add( a_ );
+		}
+		
+		return ret_;
 	}
 	
 }

@@ -1,5 +1,7 @@
 package webSQL;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,6 +37,7 @@ public class Anchor {
 	public Anchor( int p_anchorid ) throws ClassNotFoundException, SQLException
 	{
 		m_conn = WebSQL.GetConnection();
+		m_anchorid = p_anchorid;
 		
 		LoadOrCreate();
 	}
@@ -80,7 +83,7 @@ public class Anchor {
 		Save();
 	}
 	
-	public String GetBase() throws SQLException
+	public String GetBase() throws SQLException, MalformedURLException
 	{
 		String base_ = null;
 		
@@ -89,6 +92,14 @@ public class Anchor {
 			LoadOrCreate();
 		}
 		
+		try{
+			URL u_ = new URL(m_href);
+			base_ = u_.getHost();
+		}
+		catch ( MalformedURLException e)
+		{
+			System.err.println("MalformedURLException: " + e.getMessage());
+		}
 		/* @TODO Parse out base URL i.e. www.mst.edu from http://www.mst.edu/directory/foo.html */
 		return base_;
 	}

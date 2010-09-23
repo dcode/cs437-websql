@@ -92,9 +92,79 @@ public class WebSQL {
 		}
 	}
 	
-	public void Query3()
+	public void Query3() throws JSONException, SQLException, ClassNotFoundException, IOException
 	{//select d2.base, d2.label from document d1, anchor d2 such that d1 mentions xml where d1.length>100;
+		String referrer = "http://www.mst.edu";
+		String ipaddr = "131.151.1.7";
 		
+		String query_ = "xml";
+		JSONObject resultset_ = _query(query_, referrer, ipaddr);
+		JSONArray results = resultset_.getJSONObject("responseData").getJSONArray("results");
+		
+		Document doc_ = null;
+		Vector< Document > docs = new Vector< Document > ();
+		int num_ = results.length();
+		for(int i=0; i<num_; i++ )
+		{	
+			JSONObject obj_ = results.getJSONObject(i);
+			doc_ = new Document();
+			doc_.SetURL(obj_.getString("url"));
+			doc_.FetchAndParse();
+			doc_.Save();
+			docs.add(doc_);
+		}
+		
+		Iterator<Document> i = docs.iterator();
+		
+		System.out.println(
+		"Base                       |              Label              ");
+		System.out.println(
+				"------------------------------------------------------------");
+		while( i.hasNext() )
+		{
+			doc_ = i.next();
+
+			if( 100 <= doc_.GetSource().length() )
+			{
+				Vector< Anchor > anchors_ = doc_.GetAnchors();
+				Iterator<Anchor> i2 = anchors_.iterator();
+				while( i2.hasNext())
+				{
+					Anchor a2 = i2.next();
+					System.out.println(a2.GetBase() + "\t|\t" + a2.GetText());
+				}
+			}
+		}
+	}
+	
+	public void Query4() throws SQLException, IOException, ClassNotFoundException
+	{	// select x.url from document x such that http://www.w3c.org" =>|-> x where x.text contains "XML";
+		String url_ = "http://www.w3c.org";
+		Document doc_ = new Document();
+		doc_.SetURL(url_);
+		
+		// Retrieve webpage
+		doc_.SetSource(_fetch( doc_.GetURL() ));
+		doc_.Save();
+		
+		// Parse page
+		_parse(doc_);
+		
+		Vector< Document > neighbors = doc_.GetNeighbors();
+		Iterator<Document> i = neighbors.iterator();
+		
+		System.out.println(
+				"URL                       |              Title              ");
+		System.out.println(
+				"------------------------------------------------------------");
+		while( i.hasNext() )
+		{
+			doc_ = i.next();
+			if( doc_.GetSource().toLowerCase().contains("xml") )
+			{
+				System.out.println( doc_.GetURL() + "\t|\t" + doc_.GetTitle());
+			}
+		}
 	}
 	
 	public JSONObject Query( String p_query ) throws JSONException
