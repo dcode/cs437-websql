@@ -156,8 +156,8 @@ public class Document {
 		stmt_.setInt(1, m_documentid);
 		ResultSet rs_ = stmt_.executeQuery();
 		
-		// Limit to first 25 neighbors
-		while( rs_.next() && count_ < 25)
+		// Limit to first 8 neighbors
+		while( rs_.next() && count_ < 8)
 		{
 			doc_ = new Document();
 			url_ = rs_.getString("href");

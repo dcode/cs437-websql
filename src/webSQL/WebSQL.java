@@ -7,6 +7,7 @@ import java.util.Vector;
 import java.util.regex.*;
 
 import org.json.*;
+
 import java.sql.*;
 
 public class WebSQL {
@@ -31,7 +32,6 @@ public class WebSQL {
 	public void Query1() throws SQLException, ClassNotFoundException, IOException
 	{ // select d1.url,d1.title from document d1 such that http://www.umr.edu -> d1
 
-		String page_ = null;
 		String url_ = "http://www.mst.edu";
 		Document doc_ = new Document();
 		doc_.SetURL(url_);
@@ -55,6 +55,45 @@ public class WebSQL {
 			doc_ = i.next();
 			System.out.println( doc_.GetURL() + "\t|\t" + doc_.GetTitle());
 		}
+		
+	}
+	
+	public void Query2() throws SQLException, ClassNotFoundException, IOException, JSONException
+	{ //select d1.url,d1.title from document d1 such that d1 mentions mst;
+		String referrer = "http://www.mst.edu";
+		String ipaddr = "131.151.1.7";
+		
+		String query_ = "mst";
+		JSONObject resultset_ = _query(query_, referrer, ipaddr);
+		JSONArray results = resultset_.getJSONObject("responseData").getJSONArray("results");
+		
+		Document doc_ = null;
+		Vector< Document > docs = new Vector< Document > ();
+		int num_ = results.length();
+		for(int i=0; i<num_; i++ )
+		{	
+			JSONObject obj_ = results.getJSONObject(i);
+			doc_ = new Document();
+			doc_.SetURL(obj_.getString("url"));
+			doc_.SetTitle(obj_.getString("title"));
+			docs.add(doc_);
+		}
+		
+		Iterator<Document> i = docs.iterator();
+		
+		System.out.println(
+		"URL                       |              Title              ");
+		System.out.println(
+				"------------------------------------------------------------");
+		while( i.hasNext() )
+		{
+			doc_ = i.next();
+			System.out.println( doc_.GetURL() + "\t|\t" + doc_.GetTitle());
+		}
+	}
+	
+	public void Query3()
+	{//select d2.base, d2.label from document d1, anchor d2 such that d1 mentions xml where d1.length>100;
 		
 	}
 	
@@ -175,6 +214,7 @@ public class WebSQL {
 					"v=" + apiVer + 
 					"&q=" + query + 
 					"&key=" + m_key + 
+					"&rsz=large" + // Gets 8 results
 					"&userip" + ipaddr );
 
 			conn = uri.openConnection();

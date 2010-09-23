@@ -12,12 +12,13 @@ public class Driver {
 		WebSQL wql = new WebSQL();
 		
 		// This doesn't do anything yet.
-		wql.Query("SELECT d1.url,d1.title FROM document d1 SUCH THAT http://www.mst.edu -> d1;");
+		//wql.Query("SELECT d1.url,d1.title FROM document d1 SUCH THAT http://www.mst.edu -> d1;");
 
 		// This creates the websql.db file and populates it with the schema.
 		setupDB();
 		
-		wql.Query1();
+		//wql.Query1();
+		wql.Query2();
 		
 	}
 	
