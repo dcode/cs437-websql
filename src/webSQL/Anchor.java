@@ -44,29 +44,52 @@ public class Anchor {
 		SaveOrUpdate();
 	}
 	
-	public String GetHref()
+	public String GetHref() throws SQLException
 	{
-		String href_ = null;
+		String href_ = m_href;
+		
+		if( null == m_href )
+		{
+			LoadOrCreate();
+		}
 		
 		return href_;
 	}
 	
-	public void SetHref( String p_href )
+	public void SetHref( String p_href ) throws SQLException
 	{
 		m_href = p_href;
+		Save();
 	}
 	
-	public String GetText()
+	public String GetText() throws SQLException
 	{
-		String text_ = null;
+		String text_ = m_text;
+		
+		if( null == m_text )
+		{
+			LoadOrCreate();
+		}
 		
 		return text_;
 	}
 	
-	public String GetBase()
+	public void SetText( String p_text ) throws SQLException
+	{
+		m_text = p_text;
+		Save();
+	}
+	
+	public String GetBase() throws SQLException
 	{
 		String base_ = null;
 		
+		if( null == m_href )
+		{
+			LoadOrCreate();
+		}
+		
+		/* @TODO Parse out base URL i.e. www.mst.edu from http://www.mst.edu/directory/foo.html */
 		return base_;
 	}
 	
