@@ -1,16 +1,12 @@
 package webSQL;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
+import java.io.*;
+import java.net.*;
+import java.util.Iterator;
+import java.util.Vector;
+import java.util.regex.*;
 
 import org.json.*;
-
 import java.sql.*;
 
 public class WebSQL {
@@ -20,13 +16,10 @@ public class WebSQL {
 	public static final String queryURL = "http://ajax.googleapis.com/ajax/services/search/web?";
 	public static final String apiVer = "1.0";
 	
-	
-	
 	public WebSQL() 
 	{
 		m_key = "ABQIAAAAb5tp6ien1vDieaah85YjVBSvWF1I7e9NNVC_sWpzf5mrAoJcaRShjl967bKfhGjmgF3t1cqAxfkSOw";
 		m_conn = null;
-
 	}
 	
 	public WebSQL( String p_key )
@@ -35,20 +28,48 @@ public class WebSQL {
 		m_conn = null;
 	}
 	
+	public void Query1() throws SQLException, ClassNotFoundException, IOException
+	{ // select d1.url,d1.title from document d1 such that http://www.umr.edu -> d1
+
+		String page_ = null;
+		String url_ = "http://www.mst.edu";
+		Document doc_ = new Document();
+		doc_.SetURL(url_);
+		
+		// Retrieve webpage
+		doc_.SetSource(_fetch( doc_.GetURL() ));
+		doc_.Save();
+		
+		// Parse page
+		_parse(doc_);
+		
+		Vector< Document > neighbors = doc_.GetNeighbors();
+		Iterator<Document> i = neighbors.iterator();
+		
+		System.out.println(
+				"URL                       |              Title              ");
+		System.out.println(
+				"------------------------------------------------------------");
+		while( i.hasNext() )
+		{
+			doc_ = i.next();
+			System.out.println( doc_.GetURL() + "\t|\t" + doc_.GetTitle());
+		}
+		
+	}
+	
 	public JSONObject Query( String p_query ) throws JSONException
 	{
 		JSONObject ret = null;
 		JSONObject resultSetA, resultSetB;
-		JSONArray resultsA = null, resultsB = null;
-		String keywordA = "Derek Ditch MST", keywordB = "Derek Snyder MST";
+		JSONArray resultsA = null;
 		
-		resultSetA = _query(keywordA , "", "");
-		resultSetB = _query(keywordB, "", "");
+		String keywordA = "Derek Ditch MST";
+		
+		resultSetA = _query(keywordA , "http://www.mst.edu", "127.0.0.1");
 		
 		try {
-			resultsA = resultSetA.getJSONObject("responseData").getJSONArray("results");
-			resultsB = resultSetB.getJSONObject("responseData").getJSONArray("results");
-			
+			resultsA = resultSetA.getJSONObject("responseData").getJSONArray("results");			
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -57,8 +78,6 @@ public class WebSQL {
 		System.out.println("Query: " + keywordA);
 		System.out.println("Results: " + resultsA.length());
 		
-		System.out.println("Query: " + keywordB);
-		System.out.println("Results: " + resultsB.length());
 		
 		System.out.println("Search complete.");
 		return ret;
@@ -85,7 +104,7 @@ public class WebSQL {
 	protected static Connection GetConnection() throws ClassNotFoundException, SQLException
 	{
 		/* I don't check the return of InitializeDB since there's not much I can do
-		 * here about it if the connection fails. The user of this method wil
+		 * here about it if the connection fails.
 		 */
 		if( null == m_conn )
 			InitializeDB();
@@ -93,6 +112,48 @@ public class WebSQL {
 		return m_conn;
 	}
 	
+	public Document _parse( Document p_doc ) throws SQLException, ClassNotFoundException
+	{
+		// Parse Title
+		String title_ = "";
+		String regex = "<title((.|\\n)*?)>((.|\\n)*?)</title>";
+		Pattern p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+		Matcher m = p.matcher(p_doc.GetSource());
+		
+		while(m.find()) 
+		{
+			title_ = m.group(3);
+		}
+		
+		// Set Title
+		p_doc.SetTitle(title_);
+		
+		// Loop and add all outgoing anchors
+		Anchor a_ = null;
+		
+		regex = "<a[^>]*href=\"" // Find any anchor tag and ignore non-href attributes
+			+ "(http[^\"]+)"	// Capture the href attribute
+			+ "\"[^>]*>"	// Ignore any other <a> attributes
+			+ "([^<]+)"	// Capture everything up to end tag
+			+ "</a>";	// End tag
+
+		p = Pattern.compile(regex, 
+			   Pattern.DOTALL | Pattern.UNIX_LINES | Pattern.CASE_INSENSITIVE );
+		
+		m = p.matcher(p_doc.GetSource());
+
+		while(m.find())
+		{
+			a_ = new Anchor( p_doc );
+			a_.SetHref(m.group(1));	// First capture, the href
+			a_.SetText(m.group(2)); // Second capture, the text
+			a_.Save();
+		}
+		
+		p_doc.Save();
+		
+		return p_doc;
+	}
 	private JSONObject _query( String p_query, String p_referrer, String p_ipaddr )
 	{
 		String query, referrer, ipaddr;
@@ -103,29 +164,18 @@ public class WebSQL {
 		StringBuilder builder;
 		BufferedReader reader;
 		
-		/* Ease development by giving pre-configured values */
-		if( "" == p_referrer )
-		{
-			referrer = "http://www.mst.edu";
-		}
-		else
-		{
-			referrer = p_referrer;
-		}
-		
-		if( "" == p_ipaddr )
-		{
-			ipaddr = "127.0.0.1";
-		}
-		else
-		{
-			ipaddr = p_ipaddr;
-		}
-		
+		referrer = p_referrer;
+		ipaddr = p_ipaddr;
+
 		try {
 			query = URLEncoder.encode( p_query, "utf-8" );
 		
-			uri = new URL(queryURL + "v=" + apiVer + "&q=" + query + "&key=" + m_key + "&userip" + ipaddr );
+			uri = new URL(
+					queryURL + 
+					"v=" + apiVer + 
+					"&q=" + query + 
+					"&key=" + m_key + 
+					"&userip" + ipaddr );
 
 			conn = uri.openConnection();
 			conn.addRequestProperty("Referer", referrer);
@@ -155,5 +205,32 @@ public class WebSQL {
 		}
 		
 		return ret;
+	}
+	private String _fetch( String p_href ) throws IOException
+	{
+		URL u = new URL(p_href);
+		URLConnection conn = u.openConnection();
+		String encoding = conn.getContentEncoding();
+		
+		if(null == encoding )
+		{
+			encoding = "ISO-8859-1";
+		}
+		
+		BufferedReader br = new BufferedReader( new 
+				InputStreamReader(conn.getInputStream(), encoding));
+		StringBuilder sb = new StringBuilder(16384);
+		try {
+	        String line;
+	        while ((line = br.readLine()) != null )
+	        {
+	        	sb.append(line);
+	        	sb.append('\n');
+	        }
+	    } finally {
+	    	br.close();
+		}
+
+	    return sb.toString();
 	}
 }

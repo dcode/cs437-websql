@@ -17,11 +17,7 @@ public class Driver {
 		// This creates the websql.db file and populates it with the schema.
 		setupDB();
 		
-		Document foo_ = new Document();
-		
-		foo_.SetTitle("NetHedz.org | Blog");
-		foo_.SetURL("http://nethedz.org");
-		
+		wql.Query1();
 		
 	}
 	
